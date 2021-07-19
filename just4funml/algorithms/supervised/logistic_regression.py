@@ -132,37 +132,37 @@ class SoftmaxRegression:
 
         return Y_one_hot
 
+print('im in logistic regression')
 
+# from sklearn import datasets
+# np.random.seed(2042)
 
-from sklearn import datasets
-np.random.seed(2042)
+# iris = datasets.load_iris()
 
-iris = datasets.load_iris()
+# X = iris['data'][:, (2, 3)]
+# y = iris['target']
 
-X = iris['data'][:, (2, 3)]
-y = iris['target']
+# test_ratio = 0.2
+# validation_ratio = 0.2
+# total_size = len(X)
 
-test_ratio = 0.2
-validation_ratio = 0.2
-total_size = len(X)
+# test_size = int(total_size * test_ratio)
+# validation_size = int(total_size * validation_ratio)
+# train_size = total_size - test_size - validation_size
 
-test_size = int(total_size * test_ratio)
-validation_size = int(total_size * validation_ratio)
-train_size = total_size - test_size - validation_size
+# rnd_indices = np.random.permutation(total_size)
 
-rnd_indices = np.random.permutation(total_size)
+# X_train = X[rnd_indices[:train_size]]
+# y_train = y[rnd_indices[:train_size]]
+# X_valid = X[rnd_indices[train_size:-test_size]]
+# y_valid = y[rnd_indices[train_size:-test_size]]
+# X_test = X[rnd_indices[-test_size:]]
+# y_test = y[rnd_indices[-test_size:]]
 
-X_train = X[rnd_indices[:train_size]]
-y_train = y[rnd_indices[:train_size]]
-X_valid = X[rnd_indices[train_size:-test_size]]
-y_valid = y[rnd_indices[train_size:-test_size]]
-X_test = X[rnd_indices[-test_size:]]
-y_test = y[rnd_indices[-test_size:]]
-
-softmax_reg = SoftmaxRegression(learning_rate=0.1, tolerance=-np.inf, max_iter=5001, regularized_type='l2', alpha=0.1)
-softmax_reg.fit(X_train, y_train)
-# print(softmax_reg.Theta)
-y_val_pred = softmax_reg.predict(X_valid)
-print(np.mean(y_val_pred == y_valid))
+# softmax_reg = SoftmaxRegression(learning_rate=0.1, tolerance=-np.inf, max_iter=5001, regularized_type='l2', alpha=0.1)
+# softmax_reg.fit(X_train, y_train)
+# # print(softmax_reg.Theta)
+# y_val_pred = softmax_reg.predict(X_valid)
+# print(np.mean(y_val_pred == y_valid))
 
 
