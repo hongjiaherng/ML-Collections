@@ -15,3 +15,6 @@ TODO:
     - Logistic regression
         - [ ] Logistic regression
         - [x] Softmax regression    
+
+Interesting things to try:
+- Plot graph to prove how some cost functions are convex some are not 

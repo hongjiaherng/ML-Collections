@@ -1,6 +1,7 @@
 import sys
 import os
 import numpy as np
+from numpy.lib.function_base import gradient
 
 
 if __name__ == '__main__':
@@ -16,6 +17,72 @@ if __name__ == '__main__':
             sys.path.append(module_path)
 
 import just4funml.utils.preprocessing as preprocessing
+
+
+class LogisticRegression:
+    def __init__(self, learning_rate=0.1, max_iter=100, regularized_type=None, alpha=None, random_state=None):
+
+        if regularized_type not in (None, 'l1', 'l2'):
+            raise ValueError('Unexpected regularized_type value (None, l1, l2)')
+
+        self.learning_rate = learning_rate
+        self.max_iter = max_iter
+        self.regularized_type = regularized_type
+        self.alpha = alpha
+        np.random.seed(random_state)
+
+    def fit(self, X, y):
+        X_with_bias = np.c_[np.ones((len(X), 1)), X]
+        y = y.astype(np.float64).reshape(len(y), 1)    # Assume y is boolean numpy array
+
+        m = len(X)
+        n = X.shape[1]
+
+        self.theta = np.random.randn(n + 1, 1)
+
+        for epoch in range(self.max_iter):
+            y_proba = self._sigmoid(X_with_bias @ self.theta)
+            errors = y - y_proba
+            gradient = (- 1 / m) * X_with_bias.T @ errors
+
+            if self.regularized_type == 'l2':
+                gradient += (self.alpha / m) * np.r_[0, self.theta[1:]]
+            elif self.regularized_type == 'l1':
+                gradient += (self.alpha / m) * np.r_[0, np.sign(self.theta[1:])]
+
+            self.theta -= self.learning_rate * gradient
+
+
+    def predict(self, X, return_in_prob=False):
+        X_with_bias = np.c_[np.ones((len(X), 1)), X]
+        y_proba = self._sigmoid(X_with_bias @ self.theta)
+        y_proba = np.c_[y_proba, 1 - y_proba]
+
+        if not return_in_prob:
+            y_pred = y_proba[:, 0] >= 0.5
+            return y_pred
+
+        return y_proba
+        
+    def _compute_cost(self, X_with_bias, y_actual):
+
+        m = len(X_with_bias)
+
+        # y_actual is boolean numpy array
+        y_actual = y_actual.astype(np.float64).reshape(len(y_actual), 1)
+        y_proba = self._sigmoid(X_with_bias @ self.theta)
+        
+        cost = (-1 / m) * np.sum((y_actual * np.log(y_proba)) - ((1 - y_actual) * np.log(1 - y_proba)))
+
+        if self.regularized_type == 'l2':
+            cost += (self.alpha / (2 * m)) * np.sum(np.square(self.theta[1:])) 
+        elif self.regularized_type == 'l1':
+            cost += (self.alpha / m) * np.sum(np.abs(self.theta[1:]))
+
+        return cost 
+
+    def _sigmoid(self, z):
+        return 1 / (1 + np.exp(-z))
 
 
 class SoftmaxRegression:
@@ -213,5 +280,3 @@ class SoftmaxRegression:
         sums_exp_logits_across_classes = np.sum(exps_logits, axis=1, keepdims=True)  # (m x 1)
 
         return exps_logits / sums_exp_logits_across_classes  # (m x k) = (m x k) / (m x 1)
-
-
