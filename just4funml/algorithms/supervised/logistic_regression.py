@@ -1,7 +1,6 @@
 import sys
 import os
 import numpy as np
-from numpy.lib.function_base import gradient
 
 
 if __name__ == '__main__':
@@ -136,19 +135,21 @@ class SoftmaxRegression:
             # Compute logits and apply softmax function
             logits = X_with_bias @ self.Theta           # (m x k) = (m x (n + 1)) x ((n + 1) x k)
             Y_proba_pred = self._softmax(logits)        # (m x k)
-            error = Y_proba_pred - Y_one_hot            # (m x k)
+            error = Y_one_hot - Y_proba_pred            # (m x k)
 
             if epoch % 500 == 0:
                 print(epoch, self._compute_cost(X_with_bias, Y_one_hot))
 
             # Compute gradient of cost function
-            if self.regularized_type == 'l2':   # l2 loss
-                gradients = (1 / m) * X_with_bias.T @ error + np.r_[np.zeros((1, self.K)), self.alpha * self.Theta[1:]]
-            elif self.regularized_type == 'l1': # l1 loss
-                gradients = (1 / m) * X_with_bias.T @ error + np.r_[np.zeros((1, self.K)), self.alpha * np.sign(self.Theta[1:])]
-            else:   # Unregularized
-                gradients = (1 / m) * X_with_bias.T @ error  # ((n + 1) x k) = ((m x (n + 1))^T) x (m x k)
+            gradients = (-1 / m) * X_with_bias @ error  # ((n + 1) x k) = ((m x (n + 1))^T) x (m x k)
 
+            # Apply regularization if any
+            if self.regularized_type == 'l2':   # l2 loss
+                gradients += self.alpha * np.r_[np.zeros((1, self.K)), self.Theta[1:]]
+
+            elif self.regularized_type == 'l1': # l1 loss
+                gradients += self.alpha * np.r_[np.zeros((1, self.K)), np.sign(self.Theta[1:])]
+            
             # Update Theta
             self.Theta -= self.learning_rate * gradients  # ((n + 1) x k)
 
@@ -193,15 +194,17 @@ class SoftmaxRegression:
             Y_proba_pred = self._softmax(logits)  # (m x k)
             
             # Compute error term
-            error = Y_proba_pred - Y_train_one_hot  # (m x k)
+            error = Y_train_one_hot - Y_proba_pred  # (m x k)
 
             # Compute gradients of cost function
+            gradients = (-1 / m) * X_train_w_bias @ error  # ((n + 1) x k) = ((m x (n + 1))^T) x (m x k)
+
+            # Apply regularization if any
             if self.regularized_type == 'l2':   # l2 loss
-                gradients = (1 / m) * X_train_w_bias.T @ error + np.r_[np.zeros((1, self.K)), self.alpha * self.Theta[1:]]
+                gradients += self.alpha * np.r_[np.zeros((1, self.K)), self.Theta[1:]]
+
             elif self.regularized_type == 'l1': # l1 loss
-                gradients = (1 / m) * X_train_w_bias.T @ error + np.r_[np.zeros((1, self.K)), self.alpha * np.sign(self.Theta[1:])]
-            else:   # Unregularized
-                gradients = (1 / m) * X_train_w_bias.T @ error
+                gradients += self.alpha * np.r_[np.zeros((1, self.K)), np.sign(self.Theta[1:])]
 
             # Update Theta
             self.Theta -= self.learning_rate * gradients  # ((n + 1) x k)

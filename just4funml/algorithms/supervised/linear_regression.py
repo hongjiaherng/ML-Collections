@@ -1,7 +1,6 @@
 import sys
 import os
 import numpy as np
-from numpy.lib.function_base import gradient
 
 if __name__ == '__main__':
     import re
