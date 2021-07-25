@@ -18,3 +18,5 @@ TODO:
 
 Interesting things to try:
 - Plot graph to prove how some cost functions are convex some are not 
+
+logistic reg & softmax reg notes rendering problem
