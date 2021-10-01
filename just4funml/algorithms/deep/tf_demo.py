@@ -14,10 +14,9 @@ Y_processed[y != 0, 1] = 1
 
 model = keras.Sequential([
     keras.layers.InputLayer(input_shape=(2)),
-    keras.layers.Dense(units=10, activation="relu"),
-    keras.layers.Dense(units=2, activation="softmax")
+    keras.layers.Dense(units=4, activation="relu"),
+    keras.layers.Dense(units=1, activation="sigmoid")
 ])
-model.compile(optimizer="SGD", loss="categorical_crossentropy", metrics=["accuracy"])
+model.compile(optimizer="SGD", loss="binary_crossentropy", metrics=["accuracy"])
 
-history = model.fit(x=X_processed, y=Y_processed, epochs=10)
-
+history = model.fit(x=X_processed, y=Y_processed, epochs=100)

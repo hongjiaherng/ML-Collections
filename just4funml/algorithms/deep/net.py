@@ -44,13 +44,19 @@ class Net:
             else: raise Exception(proper_layers_config[i]["layer_type"] + " layer doesn't exist")
 
     
-    def init_params(self, method):
+    def init_params(self, method, seed=None):
+        check_params = {}
+        i = 1
         for l in range(len(self.layers)):
             if hasattr(self.layers[l], "parameters"):
-                self.layers[l].parameters["W"] = initializers.weights_init(method=method, n_prev=self.layers[l-1].n_neurons, n_this=self.layers[l].n_neurons)
+                self.layers[l].parameters["W"] = initializers.weights_init(method=method, n_prev=self.layers[l-1].n_neurons, n_this=self.layers[l].n_neurons, seed=seed)
                 self.layers[l].parameters["b"] = np.zeros((1, self.layers[l].n_neurons))
+                check_params[f"W{i}"] = self.layers[l].parameters["W"]
+                check_params[f"b{i}"] = self.layers[l].parameters["b"]
+                i += 1
         self.params_init = True
-        
+        return check_params
+
 
     def forward_prop(self, X):
         assert self.params_init
@@ -71,83 +77,3 @@ class Net:
         
         return loss
         
-
-layers_config = []
-# layers_config.append({"layer_type": "input", "n_neurons": 2})
-# layers_config.append({"layer_type": "fc", "n_neurons": 100, "activation": "relu"})
-# layers_config.append({"layer_type": "fc", "n_neurons": 100, "activation": "relu"})
-# layers_config.append({"layer_type": "fc", "n_neurons": 100, "activation": "relu"})
-# layers_config.append({"layer_type": "fc", "n_neurons": 100, "activation": "relu"})
-# layers_config.append({"layer_type": "softmax", "n_neurons": 2})
-
-# layers_config.append({"layer_type": "input", "n_neurons": 2})
-# layers_config.append({"layer_type": "fc", "n_neurons": 4})
-# layers_config.append({"layer_type": "relu"})
-# layers_config.append({"layer_type": "fc", "n_neurons": 4})
-# layers_config.append({"layer_type": "relu"})
-# layers_config.append({"layer_type": "regression", "n_neurons": 1})
-
-layers_config.append({"layer_type": "input", "n_neurons": 2})
-layers_config.append({"layer_type": "fc", "n_neurons": 4, "activation": 'relu'})
-# layers_config.append({"layer_type": "fc", "n_neurons": 10, "activation": 'relu'})
-layers_config.append({"layer_type": "logistic"})
-
-
-from sklearn.datasets import load_iris
-
-iris_dataset = load_iris()
-X = iris_dataset["data"]
-y = iris_dataset["target"]
-X_processed = X[:, 2:]
-Y_processed = (y == 0).astype('int').reshape(-1, 1)
-
-nn = Net()
-nn.bind_layers(layers_config)
-nn.init_params(method="xavier")
-
-Y_hat = nn.forward_prop(X_processed)
-loss = nn.backward_prop(Y_processed)
-Y_pred = (Y_hat > 0.5).astype("float")
-print("acc:", np.sum(Y_pred == Y_processed) / Y_processed.shape[0])
-print("loss:", loss)
-
-costs = []
-accs = []
-for i in range(5000):
-    Y_hat = nn.forward_prop(X_processed)
-    loss = nn.backward_prop(Y_processed)
-    
-    Y_pred = (Y_hat > 0.5).astype("float")
-    print(f"loss {i}: {np.round(loss, 3)}", end="\t")
-    acc = np.round(np.sum(Y_pred == Y_processed) / Y_processed.shape[0], 3)
-    print("acc:", acc)
-
-    costs.append(loss)
-    accs.append(acc)
-    
-    for layer in nn.layers:
-        if hasattr(layer, "parameters"):
-            layer.parameters["W"] = layer.parameters["W"] - 0.01 * layer.dJdW  
-            layer.parameters["b"] = layer.parameters["b"] - 0.01 * layer.dJdb
-
-
-import matplotlib.pyplot as plt
-
-xx, yy = np.meshgrid(
-                np.linspace(np.min(X_processed[:, 0]) - 1, np.max(X_processed[:, 0]) + 1, 500), 
-                np.linspace(np.min(X_processed[:, 1]) - 1, np.max(X_processed[:, 1]) + 1, 500)
-         )
-X_new = np.c_[xx.ravel(), yy.ravel()]
-y_proba = nn.forward_prop(X_new)
-y_predict = (y_proba > 0.5).astype("float")
-# zz1 = y_proba[:, 0].reshape(xx.shape)
-zz = y_predict.reshape(xx.shape)
-
-fig, axes = plt.subplots(1, 2, figsize=(10, 5))
-# plt.contour(xx, yy, zz1)
-axes[0].contourf(xx, yy, zz, cmap="jet")
-axes[0].scatter(X_processed[:, 0], X_processed[:, 1], c=Y_processed)
-axes[1].plot(costs, label="cost")
-axes[1].plot(accs, label="acc")
-axes[1].legend()
-plt.show()

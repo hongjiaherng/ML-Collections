@@ -49,6 +49,10 @@ class FullyConnected:
         dLdA_prev = np.dot(dLdZ, self.parameters["W"].T) # (m, n_prev) = (m, n_this) x (n_prev, n_this).T
         self.vol_in.grads[:] = dLdA_prev
 
+        # print(f"dJdW: {self.dJdW}")
+        # print(f"dJdb: {self.dJdb}")
+        # print(f"dLdA_prev: {self.vol_in.grads}")
+        
         # print(f"{self.layer_type} (out) \t-> {self.vol_out}")
         # print(f"{self.layer_type} (in) \t-> {self.vol_in}")
         
@@ -104,7 +108,7 @@ class Sigmoid:
         dAdZ = self.vol_out.tensor * (1 - self.vol_out.tensor)
         dLdZ = dLdA * dAdZ
         self.vol_in.grads[:] = dLdZ
-
+        # print(f"dLdZ: {self.vol_in.grads}")
         # print(f"{self.layer_type} (out) \t-> {self.vol_out}")
         # print(f"{self.layer_type} (in) \t-> {self.vol_in}")
         
@@ -119,7 +123,8 @@ class Tanh:
         self.vol_in = vol_in
         # Compute A = tanh(vol_in)
         Z = vol_in.tensor
-        A = (np.exp(2 * Z) - 1) / (np.exp(2 * Z) + 1)
+        exp_2z = np.exp(2 * Z)
+        A = (exp_2z - 1) / (exp_2z + 1)
         self.vol_out = Vol(A)
 
         return self.vol_out
@@ -151,16 +156,16 @@ class Regression:
         # y: (m, k)
         Y_hat = self.vol_in.tensor
 
-        m = Y.shape[0]
-        loss = 1 / (2 * m) * np.sum(np.power(Y_hat - Y, 2))
-
+        loss = 1 / 2 * np.power(Y_hat - Y, 2)
+        cost = np.mean(loss, axis=0, keepdims=True) 
+        
         dLdY_hat = Y_hat - Y
         self.vol_in.grads[:] = dLdY_hat
         
         # print(f"{self.layer_type} (out) \t-> {self.vol_out}")
         # print(f"{self.layer_type} (in) \t-> {self.vol_in}")
         
-        return loss
+        return np.squeeze(cost)
 
 
 class Logistic:
@@ -179,16 +184,17 @@ class Logistic:
         # Compute dLdA, given Y and Y_hat
         Y_hat = self.vol_in.tensor
 
-        m = Y.shape[0]
-        loss = -1 / m * np.sum(Y * np.log(Y_hat) + (1 - Y) * np.log(1 - Y_hat))
+        loss = - (Y * np.log(Y_hat) + (1 - Y) * np.log(1 - Y_hat))
+        cost = np.mean(loss, axis=0, keepdims=True)
         
-        dLdY_hat = (-Y / Y_hat) + (1 - Y / 1 - Y_hat)
+        dLdY_hat = (- Y / Y_hat) + ((1 - Y) / (1 - Y_hat))
         self.vol_in.grads[:] = dLdY_hat
-
+        # print(f"loss: {loss}")
+        # print(f"dLdA2: {self.vol_in.grads}")
         # print(f"{self.layer_type} (out) \t-> {self.vol_out}")
         # print(f"{self.layer_type} (in) \t-> {self.vol_in}")
 
-        return loss
+        return np.squeeze(cost)
 
 class Softmax:
     def __init__(self, n_neurons):
